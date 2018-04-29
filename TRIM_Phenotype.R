@@ -18,7 +18,7 @@ FindMutant <- function(x){
   return(mutant[2])
 }
 
-# Create a mutants and phenotype tabe store it as a csv file
+# Create a mutantsphenotype tabe and store it as a csv file
 
 Mutant_data <- sapply(c(1:68),FindMutant)
 struct <-c(rep("Development",time=4),
@@ -42,7 +42,7 @@ Phenotype <- cbind(PhenotypeURL,struct,Mutant_data) %>% data.frame %>% write.csv
 
 Phenotype <- read.csv(file = 'TRIM_phenotype.csv',header = TRUE)
 
-# Search mutant's phenotype and print output
+# Search mutant's phenotype and print it out
 
 Search <- function(name){
   for(i in c(1:68)){

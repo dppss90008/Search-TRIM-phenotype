@@ -1,29 +1,26 @@
 # Craw title and Connection from TRIM database
 library(rvest)
-url = 'http://rice.sinica.edu.tw/TRIM2/showTraits.php'
-url=read_html(url) 
-url=html_nodes(url,"a") 
-title=html_text(url)
-nxturl=html_attr(url,"href")
-nxturl <- sapply(nxturl,function(x){
-  return(paste0("http://rice.sinica.edu.tw/TRIM2/",x))
-})
+library(magrittr)
 
-# Phenotype URL table
-PhenotypeURL <- cbind(title,nxturl)
+url = 'http://rice.sinica.edu.tw/TRIM2/showTraits.php' %>% read_html %>% html_nodes(.,"a") 
+title = html_text(url)
+linkURL = html_attr(url,"href") %>% sapply(.,function(x){
+  return(paste0("http://rice.sinica.edu.tw/TRIM2/",x))})
+
+# Create a Phenotype URL table
+PhenotypeURL <- cbind(title,linkURL)
 PhenotypeURL <- PhenotypeURL[-c(69,70),]
 rownames(PhenotypeURL) <- c(1:68)
 
+# Craw mutants from linkURL
 FindMutant <- function(x){
-  url=read_html(PhenotypeURL[x,2]) 
-  url=html_nodes(url,"td")
-  mutant=html_text(url)
+  mutant = read_html(PhenotypeURL[x,2]) %>% html_nodes(.,"td") %>% html_text
   return(mutant[2])
 }
 
-library(magrittr)
-Mutantdata <- sapply(c(1:68),FindMutant)
-Phenotype <- cbind(PhenotypeURL,Mutantdata) %>% data.frame
+# Create a mutants and phenotype tabe store it as a csv file
+
+Mutant_data <- sapply(c(1:68),FindMutant)
 struct <-c(rep("Development",time=4),
            rep("Leaf Color",time=10),
            rep("Leaf Morphology",time=13),
@@ -37,18 +34,19 @@ struct <-c(rep("Development",time=4),
            rep("Grain",time=5)
 )
 
-Phenotype<- cbind(Phenotype,struct)
-write.csv(Phenotype,file='TRIM.csv')
+Phenotype <- cbind(PhenotypeURL,struct,Mutant_data) %>% data.frame %>% write.csv(.,file='TRIM_phenotype.csv')
 
-# Open file from phenotype database
 
-Phenotype <- read.csv(file = 'TRIM.csv',header = TRUE)
+#### You can start your program from here (You do not have to craw the data again) ####
+# Open file from phenotype csv file
 
-# Search mutant's phenotype
+Phenotype <- read.csv(file = 'TRIM_phenotype.csv',header = TRUE)
+
+# Search mutant's phenotype and print output
 
 Search <- function(name){
   for(i in c(1:68)){
-    if(grepl(name, as.character(Phenotype$Mutantdata[i]))==TRUE){
+    if(grepl(name, as.character(Phenotype$Mutant_data[i]))==TRUE){
       print(paste(as.character(Phenotype$struct[i]),'-',as.character(Phenotype$title[i])))
     }
   } 
@@ -56,4 +54,4 @@ Search <- function(name){
 
 # Command : Search("Mutant name")
 
-Search("11350")
+Search("M0052048")
